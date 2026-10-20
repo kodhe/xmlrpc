@@ -43,6 +43,12 @@ class SocketTransport implements TransportInterface
         $host = $parts['host'] ?? $url;
         $path = $parts['path'] ?? '/';
 
+        // CRLF guard: a host containing CR/LF could inject arbitrary HTTP
+        // headers into the raw request built below.
+        if (preg_match('/[\r\n]/', $host) || preg_match('/[\r\n]/', $path)) {
+            throw new TransportException('Invalid URL: header injection detected', 0, null, $url);
+        }
+
         if (isset($parts['user'], $parts['pass'])) {
             $authHeader = 'Authorization: Basic '.base64_encode($parts['user'].':'.$parts['pass'])."\r\n";
         } else {

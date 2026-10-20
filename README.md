@@ -1,14 +1,14 @@
 # Kodhe XML-RPC (Client)
 
-Library XML-RPC sisi **klien** hasil refaktor `Xmlrpc` CodeIgniter 3 (namespace `Kodhe\Framework\Xmlrpc`). Digunakan untuk memanggil method pada server XML-RPC remote (mis. WordPress `xmlrpc.php`, Blogger, layanan web RPC lama). Tersedia dua gaya API: prosedural CI3 (`server() → method() → request() → send_request()`) dan objek modern `Client\XmlRpcClient::call()` dengan transport/encoder/decoder yang dapat disuntik.
+XML-RPC **client**-side library refactored from CodeIgniter 3's `Xmlrpc` (namespace `Kodhe\Framework\Xmlrpc`). Used to call methods on a remote XML-RPC server (e.g. WordPress `xmlrpc.php`, Blogger, legacy RPC web services). Two API styles are available: the CI3 procedural style (`server() → method() → request() → send_request()`) and the modern object-oriented `Client\XmlRpcClient::call()` with injectable transport/encoder/decoder.
 
-## Instalasi
+## Installation
 
 ```bash
 composer require kodhe/xmlrpc
 ```
 
-Persyaratan: PHP >= 8.1, extension `curl` (transport default), lib `xml`.
+Requirements: PHP >= 8.1, the `curl` extension (default transport), and the `xml` library.
 
 ## Quick Start
 
@@ -24,32 +24,32 @@ $rpc = new Xmlrpc();
 $rpc->server('https://example.com/xmlrpc.php', 443);
 $rpc->method('wp.getPostFormats');
 $rpc->request([
-    ['postId' => 1, 'username' => 'admin', 'password' => 'rahasia'],
+    ['postId' => 1, 'username' => 'admin', 'password' => 'secret'],
 ]);
 
 if ($rpc->send_request() !== false) {
-    print_r($rpc->display_response());   // array hasil dekode
+    print_r($rpc->display_response());   // decoded result array
 } else {
     echo $rpc->display_error();          // fault string
 }
 ```
 
-## Struktur Direktori
+## Directory Structure
 
 ```
 src/
-├── Xmlrpc.php               # Kelas utama kompatibel CI3
-├── Client/XmlRpcClient.php  # Klien OO modern (setServer/call)
+├── Xmlrpc.php               # Main CI3-compatible class
+├── Client/XmlRpcClient.php  # Modern OO client (setServer/call)
 ├── Message/                 # XmlRpcMessage (request), XmlRpcResponse
-├── Encoder/ Decoder/        # encode/decode payload XML-RPC
+├── Encoder/ Decoder/        # encode/decode XML-RPC payloads
 ├── Transport/ + Factory/    # HTTP transport (curl/stream)
 ├── ValueObjects/XmlRpcValue.php
 ├── Contracts/ Support/ Exceptions/
 ```
 
-## Penggunaan
+## Usage
 
-### 1. Memakai tipe data XML-RPC (konstanta `xmlrpc_*`)
+### 1. Using XML-RPC data types (`xmlrpc_*` constants)
 
 ```php
 $rpc->request([
@@ -63,23 +63,23 @@ $rpc->request([
 ]);
 ```
 
-Properti publik ini identik dengan konstanta `CI_Xmlrpc::$xmlrpc_*` lama.
+These public properties are identical to the legacy `CI_Xmlrpc::$xmlrpc_*` constants.
 
 ### 2. Proxy & timeout
 
 ```php
 $rpc->server('http://rpc.example.com/xmlrpc.php', 80,
-            'proxy.example.com', 8080);  // lewat proxy
-$rpc->timeout(15);                        // detik
+            'proxy.example.com', 8080);  // through a proxy
+$rpc->timeout(15);                        // seconds
 $rpc->set_debug(true);                    // log request/response
 ```
 
-### 3. Gaya modern: `XmlRpcClient`
+### 3. Modern style: `XmlRpcClient`
 
 ```php
 use Kodhe\Framework\Xmlrpc\Client\XmlRpcClient;
 
-$client = new XmlRpcClient();           // factory memilih transport/encoder default
+$client = new XmlRpcClient();           // factory picks default transport/encoder
 $client->setServer('https://example.com/xmlrpc.php', 443)
        ->setTimeout(10)
        ->setDebug(false);
@@ -90,47 +90,47 @@ if ($result === false) {
 }
 ```
 
-Transport, encoder, dan decoder bisa diganti lewat konstruktor selama mengimplementasikan `Contracts/*Interface` (lihat `Factory/TransportFactory::create()` untuk contoh default).
+The transport, encoder, and decoder can be swapped via the constructor as long as they implement the corresponding `Contracts/*Interface` (see `Factory/TransportFactory::create()` for the default examples).
 
-### 4. Bangkitkan respons manual (utilitas server-side kecil)
-
-```php
-$rpc->send_error_message(404, 'Method tidak ditemukan'); // panggil fault XML
-$rpc->send_response(['ok' => true]);                     // panggil success XML
-```
-
-### 5. Membaca fault response
+### 4. Manually generating responses (small server-side utility)
 
 ```php
-$fault = $rpc->display_error();  // string pesan fault dari server
+$rpc->send_error_message(404, 'Method not found'); // emit XML fault
+$rpc->send_response(['ok' => true]);               // emit success XML
 ```
 
-## Referensi API (`Xmlrpc`)
+### 5. Reading a fault response
 
-| Method | Keterangan |
+```php
+$fault = $rpc->display_error();  // fault message string from the server
+```
+
+## API Reference (`Xmlrpc`)
+
+| Method | Description |
 |---|---|
-| `initialize(array $config)` | Set preferensi massal |
-| `server($url, $port, $proxy, $proxy_port)` | Tentukan endpoint |
-| `timeout($seconds)` | Timeout koneksi |
-| `method($function)` | Nama method remote |
-| `request($incoming)` | Susun parameter (array of values / typed) |
-| `values_parsing($value)` | Normalisasi nilai bertipe |
-| `send_request()` | Kirim; return response object / FALSE |
-| `display_response()` | Hasil dekode (array/scalar) |
-| `display_error()` | Fault sebagai string |
-| `send_error_message($n,$msg)` / `send_response($r)` | Output XML balasan |
-| `set_debug($flag)` | Mode debug |
+| `initialize(array $config)` | Set preferences in bulk |
+| `server($url, $port, $proxy, $proxy_port)` | Specify the endpoint |
+| `timeout($seconds)` | Connection timeout |
+| `method($function)` | Name of the remote method |
+| `request($incoming)` | Build the parameters (array of values / typed) |
+| `values_parsing($value)` | Normalize typed values |
+| `send_request()` | Send; returns response object / FALSE |
+| `display_response()` | Decoded result (array/scalar) |
+| `display_error()` | Fault as a string |
+| `send_error_message($n,$msg)` / `send_response($r)` | Reply XML output |
+| `set_debug($flag)` | Debug mode |
 
-## Kompatibilitas CodeIgniter 3
+## CodeIgniter 3 Compatibility
 
-`Xmlrpc` adalah pengganti drop-in `CI_Xmlrpc`: nama method, properti `$xmlrpc_*`, dan format payload sama. Perbedaan hanya namespace. Helper CI (`log_message`, curl config) tetap dipakai di jalur transport lama.
+`Xmlrpc` is a drop-in replacement for `CI_Xmlrpc`: method names, `$xmlrpc_*` properties, and payload formats are the same. Only the namespace differs. CI helpers (`log_message`, curl config) are still used on the legacy transport path.
 
-## Catatan
+## Notes
 
-- `send_request()` mengembalikan `false` saat transport gagal ATAU server mengirim fault — cek `display_error()` untuk membedakan.
-- Payload besar: naikkan batas memori/timeout; parser memakai SimpleXML internal via `Decoder/`.
+- `send_request()` returns `false` both when the transport fails AND when the server sends a fault — use `display_error()` to tell them apart.
+- Large payloads: raise the memory/time limits; the parser uses the internal SimpleXML implementation via `Decoder/`.
 
-## Pengujian
+## Testing
 
 ```bash
 vendor/bin/phpunit --filter Xmlrpc
